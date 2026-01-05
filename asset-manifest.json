@@ -1,13 +1,13 @@
 {
   "files": {
-    "main.css": "/student-registration/static/css/main.d0f28090.css",
-    "main.js": "/student-registration/static/js/main.2fd0eebe.js",
-    "index.html": "/student-registration/index.html",
-    "main.d0f28090.css.map": "/student-registration/static/css/main.d0f28090.css.map",
-    "main.2fd0eebe.js.map": "/student-registration/static/js/main.2fd0eebe.js.map"
+    "main.css": "/Student-attendance/static/css/main.d0f28090.css",
+    "main.js": "/Student-attendance/static/js/main.3daeb655.js",
+    "index.html": "/Student-attendance/index.html",
+    "main.d0f28090.css.map": "/Student-attendance/static/css/main.d0f28090.css.map",
+    "main.3daeb655.js.map": "/Student-attendance/static/js/main.3daeb655.js.map"
   },
   "entrypoints": [
     "static/css/main.d0f28090.css",
-    "static/js/main.2fd0eebe.js"
+    "static/js/main.3daeb655.js"
   ]
 }
