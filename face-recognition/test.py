@@ -12,10 +12,10 @@ face_cascade = cv2.CascadeClassifier(
 )
 
 img = cv2.imread(
-    r"C:\Users\user\OneDrive\Desktop\student dataset\student registraion\face-recognition\test.jpg"
+    r"C:\Users\user\OneDrive\Desktop\student dataset\student registration\face-recognition\test.jpg"
 )
 if img is None:
-    print("❌ test.jpg load nahi hui")
+    print("❌ test.jpg ")
     exit()
 gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
