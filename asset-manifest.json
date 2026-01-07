@@ -1,13 +1,13 @@
 {
   "files": {
     "main.css": "/Student-attendance/static/css/main.d0f28090.css",
-    "main.js": "/Student-attendance/static/js/main.3daeb655.js",
+    "main.js": "/Student-attendance/static/js/main.e2a0e873.js",
     "index.html": "/Student-attendance/index.html",
     "main.d0f28090.css.map": "/Student-attendance/static/css/main.d0f28090.css.map",
-    "main.3daeb655.js.map": "/Student-attendance/static/js/main.3daeb655.js.map"
+    "main.e2a0e873.js.map": "/Student-attendance/static/js/main.e2a0e873.js.map"
   },
   "entrypoints": [
     "static/css/main.d0f28090.css",
-    "static/js/main.3daeb655.js"
+    "static/js/main.e2a0e873.js"
   ]
 }
