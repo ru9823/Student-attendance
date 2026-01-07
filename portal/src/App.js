@@ -21,7 +21,7 @@ function App() {
     email: "",
   });
 
-  /* ---------- Direction logic ---------- */
+  /* ---------- Direction logic (optional UI) ---------- */
   const directions = ["Front", "Up", "Down", "Left", "Right"];
   const directionSymbols = {
     Front: "●",
@@ -30,9 +30,10 @@ function App() {
     Left: "⬅️",
     Right: "➡️",
   };
-  const currentDirection = directions[images.length] || "Front";
-  /* ----------------------------------- */
+  const currentDirection = directions[Math.min(images.length, 4)] || "Front";
+  /* -------------------------------------------------- */
 
+  /* ---------- Stop camera on unmount ---------- */
   useEffect(() => {
     return () => {
       if (videoRef.current?.srcObject) {
@@ -41,19 +42,9 @@ function App() {
     };
   }, []);
 
+  /* ---------- Form change ---------- */
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
-  };
-
-  /* ---------- Start Camera ---------- */
-  const startCamera = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-      videoRef.current.srcObject = stream;
-      setMsg("");
-    } catch {
-      setMsg("❌ Camera access denied");
-    }
   };
 
   /* ---------- Send image to backend ---------- */
@@ -70,28 +61,52 @@ function App() {
     });
   };
 
-  /* ---------- Capture image ---------- */
-  const capture = async () => {
-    if (!videoRef.current?.videoWidth) {
-      setMsg("Camera not ready");
-      return;
-    }
-
-    if (images.length >= 5) {
-      setMsg("5 images already captured");
-      return;
-    }
+  /* ---------- AUTO VIDEO CAPTURE (MAIN LOGIC) ---------- */
+  const autoCaptureFromVideo = async () => {
+    if (!videoRef.current) return;
 
     const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
+
     canvas.width = 640;
     canvas.height = 480;
-    canvas.getContext("2d").drawImage(videoRef.current, 0, 0);
 
-    const imgData = canvas.toDataURL("image/png");
-    await sendToBackend(imgData, images.length);
+    let count = 0;
+    const TOTAL_IMAGES = 15; // 5 sec × 3 images
 
-    setImages((prev) => [...prev, imgData]);
-    setMsg("");
+    setMsg("🎥 Auto capturing images from video...");
+
+    const interval = setInterval(async () => {
+      if (count >= TOTAL_IMAGES) {
+        clearInterval(interval);
+        setMsg("✅ Auto capture completed");
+        return;
+      }
+
+      ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
+      const imgData = canvas.toDataURL("image/png");
+
+      await sendToBackend(imgData, count);
+      setImages((prev) => [...prev, imgData]);
+
+      count++;
+    }, 333); // ~3 images per second
+  };
+
+  /* ---------- Start Camera ---------- */
+  const startCamera = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      videoRef.current.srcObject = stream;
+      setMsg("🎥 Camera started");
+
+      // Auto capture after short delay
+      setTimeout(() => {
+        autoCaptureFromVideo();
+      }, 500);
+    } catch {
+      setMsg("❌ Camera access denied");
+    }
   };
 
   /* ---------- Submit student info ---------- */
@@ -109,15 +124,15 @@ function App() {
       return;
     }
 
-    if (images.length !== 5) {
-      setMsg("Please capture all 5 images");
+    if (images.length < 15) {
+      setMsg("Please wait for auto capture to finish");
       return;
     }
 
     try {
       await addDoc(collection(db, "students"), {
         ...form,
-        imagesCount: 5,
+        imagesCount: images.length,
         createdAt: new Date().toISOString(),
       });
 
@@ -170,9 +185,7 @@ function App() {
 
           <select name="department" value={form.department} onChange={handleChange}>
             <option value="">Select Department</option>
-            <option value="Computer Science and Engineering">
-              Computer Science and Engineering
-            </option>
+            <option value="Computer Science and Engineering">Computer Science and Engineering</option>
             <option value="Information Technology">Information Technology</option>
             <option value="Computer Science and Engineering DS">Computer Science and Engineering DS</option>
             <option value="Civil Engineering">Civil Engineering</option>
@@ -188,11 +201,7 @@ function App() {
           <input type="date" name="dob" value={form.dob} onChange={handleChange} />
           <input name="email" placeholder="Email" value={form.email} onChange={handleChange} />
 
-          <button
-            className="submit-btn"
-            onClick={submit}
-            disabled={images.length !== 5}
-          >
+          <button className="submit-btn" onClick={submit}>
             Submit
           </button>
 
@@ -213,9 +222,6 @@ function App() {
 
           <div className="camera-buttons">
             <button onClick={startCamera}>Start Camera</button>
-            <button onClick={capture}>
-              Capture ({images.length}/5)
-            </button>
           </div>
 
           <div className="preview-row">

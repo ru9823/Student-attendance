@@ -4,7 +4,7 @@ import os
 from PIL import Image
 import json
 
-dataset_path = "dataset"
+dataset_path = "uploads"
 trainer_dir = "trainer"
 trainer_file = "trainer/trainer.yml"
 label_file = "labels.json"
