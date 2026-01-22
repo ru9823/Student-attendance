@@ -11,15 +11,16 @@ app.use(express.json({ limit: "25mb" }));
 
 // ---------------- FOLDERS ----------------
 const UPLOADS = path.join(__dirname, "uploads");
+const STUDENT = path.join(UPLOADS, "student");
+const FACULTY = path.join(UPLOADS, "faculty");
 
-if (!fs.existsSync(UPLOADS)) {
-  fs.mkdirSync(UPLOADS, { recursive: true });
-}
+if (!fs.existsSync(STUDENT)) fs.mkdirSync(STUDENT, { recursive: true });
+if (!fs.existsSync(FACULTY)) fs.mkdirSync(FACULTY, { recursive: true });
 
 // ---------------- API ----------------
 app.post("/upload-base64", (req, res) => {
   try {
-    const { image, name, rollno, index } = req.body;
+    const { image, name, rollno, index, role } = req.body;
 
     if (!image || !name || !rollno || index === undefined) {
       return res.status(400).json({
@@ -28,17 +29,20 @@ app.post("/upload-base64", (req, res) => {
       });
     }
 
-    // ---------- STUDENT FOLDER ----------
-    const folderName = `${rollno}_${name.replace(/\s+/g, "_")}`;
-    const studentDir = path.join(UPLOADS, folderName);
+    // ✅ SELECT BASE FOLDER
+    const BASE = role === "faculty" ? FACULTY : STUDENT;
 
-    if (!fs.existsSync(studentDir)) {
-      fs.mkdirSync(studentDir, { recursive: true });
+    // ---------- PERSON FOLDER ----------
+    const folderName = `${rollno}_${name.replace(/\s+/g, "_")}`;
+    const personDir = path.join(BASE, folderName);
+
+    if (!fs.existsSync(personDir)) {
+      fs.mkdirSync(personDir, { recursive: true });
     }
 
-    // ---------- SAVE IMAGE DIRECTLY ----------
+    // ---------- SAVE IMAGE ----------
     const base64Data = image.replace(/^data:image\/\w+;base64,/, "");
-    const imagePath = path.join(studentDir, `img_${index + 1}.jpg`);
+    const imagePath = path.join(personDir, `img_${index + 1}.jpg`);
 
     fs.writeFileSync(imagePath, base64Data, "base64");
 

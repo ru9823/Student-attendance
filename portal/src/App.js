@@ -10,6 +10,7 @@ function App() {
   const [msg, setMsg] = useState("");
 
   const [form, setForm] = useState({
+    role: "student",   // ✅ Student / Faculty
     name: "",
     rollno: "",
     section: "",
@@ -20,18 +21,6 @@ function App() {
     dob: "",
     email: "",
   });
-
-  /* ---------- Direction logic (optional UI) ---------- */
-  const directions = ["Front", "Up", "Down", "Left", "Right"];
-  const directionSymbols = {
-    Front: "●",
-    Up: "⬆️",
-    Down: "⬇️",
-    Left: "⬅️",
-    Right: "➡️",
-  };
-  const currentDirection = directions[Math.min(images.length, 4)] || "Front";
-  /* -------------------------------------------------- */
 
   /* ---------- Stop camera on unmount ---------- */
   useEffect(() => {
@@ -57,11 +46,12 @@ function App() {
         name: form.name,
         rollno: form.rollno,
         index: index,
+        role: form.role,   // ✅ Student / Faculty
       }),
     });
   };
 
-  /* ---------- AUTO VIDEO CAPTURE (MAIN LOGIC) ---------- */
+  /* ---------- AUTO VIDEO CAPTURE ---------- */
   const autoCaptureFromVideo = async () => {
     if (!videoRef.current) return;
 
@@ -74,7 +64,7 @@ function App() {
     let count = 0;
     const TOTAL_IMAGES = 15; // 5 sec × 3 images
 
-    setMsg("🎥 Auto capturing images from video...");
+    setMsg("🎥 Auto capturing images...");
 
     const interval = setInterval(async () => {
       if (count >= TOTAL_IMAGES) {
@@ -90,7 +80,7 @@ function App() {
       setImages((prev) => [...prev, imgData]);
 
       count++;
-    }, 333); // ~3 images per second
+    }, 333);
   };
 
   /* ---------- Start Camera ---------- */
@@ -100,7 +90,6 @@ function App() {
       videoRef.current.srcObject = stream;
       setMsg("🎥 Camera started");
 
-      // Auto capture after short delay
       setTimeout(() => {
         autoCaptureFromVideo();
       }, 500);
@@ -109,18 +98,12 @@ function App() {
     }
   };
 
-  /* ---------- Submit student info ---------- */
+  /* ---------- Submit info ---------- */
   const submit = async (e) => {
     e.preventDefault();
 
-    if (
-      !form.name ||
-      !form.rollno ||
-      !form.section ||
-      !form.year ||
-      !form.department
-    ) {
-      setMsg("Please fill all required fields");
+    if (!form.name || !form.rollno || !form.department) {
+      setMsg("Please fill required fields");
       return;
     }
 
@@ -130,16 +113,20 @@ function App() {
     }
 
     try {
-      await addDoc(collection(db, "students"), {
+      // ✅ Dynamic collection
+      const collectionName = form.role === "faculty" ? "faculty" : "students";
+
+      await addDoc(collection(db, collectionName), {
         ...form,
         imagesCount: images.length,
         createdAt: new Date().toISOString(),
       });
 
-      setMsg("✅ Student registered successfully");
+      setMsg("✅ Registration successful");
 
       setImages([]);
       setForm({
+        role: "student",
         name: "",
         rollno: "",
         section: "",
@@ -162,40 +149,19 @@ function App() {
 
         {/* LEFT FORM */}
         <div className="form-section">
-          <h2>Student Registration</h2>
+          <h2>Registration Form</h2>
+
+          {/* Role Dropdown */}
+          <select name="role" value={form.role} onChange={handleChange}>
+            <option value="student">Student</option>
+            <option value="faculty">Faculty</option>
+          </select>
 
           <input name="name" placeholder="Name" value={form.name} onChange={handleChange} />
-          <input name="rollno" placeholder="Roll No" value={form.rollno} onChange={handleChange} />
-
-          <select name="section" value={form.section} onChange={handleChange}>
-            <option value="">Select Section</option>
-            <option value="A">A</option>
-            <option value="B">B</option>
-            <option value="C">C</option>
-            <option value="D">D</option>
-          </select>
-
-          <select name="year" value={form.year} onChange={handleChange}>
-            <option value="">Select Year</option>
-            <option value="1st Year">I Year</option>
-            <option value="2nd Year">II Year</option>
-            <option value="3rd Year">III Year</option>
-            <option value="Final Year">IV Year</option>
-          </select>
-
-          <select name="department" value={form.department} onChange={handleChange}>
-            <option value="">Select Department</option>
-            <option value="Computer Science and Engineering">Computer Science and Engineering</option>
-            <option value="Information Technology">Information Technology</option>
-            <option value="Computer Science and Engineering DS">Computer Science and Engineering DS</option>
-            <option value="Civil Engineering">Civil Engineering</option>
-            <option value="Electrical Engineering">Electrical Engineering</option>
-            <option value="Mechanical Engineering">Mechanical Engineering</option>
-            <option value="Electronics and Telecommunication Engineering">
-              Electronics and Telecommunication Engineering
-            </option>
-          </select>
-
+          <input name="rollno" placeholder="Roll No / Faculty ID" value={form.rollno} onChange={handleChange} />
+          <input name="section" placeholder="Section" value={form.section} onChange={handleChange} />
+          <input name="year" placeholder="Year" value={form.year} onChange={handleChange} />
+          <input name="department" placeholder="Department" value={form.department} onChange={handleChange} />
           <input name="gender" placeholder="Gender" value={form.gender} onChange={handleChange} />
           <input name="mobile" placeholder="Mobile" value={form.mobile} onChange={handleChange} />
           <input type="date" name="dob" value={form.dob} onChange={handleChange} />
@@ -213,11 +179,6 @@ function App() {
           <div className="camera-box">
             <video ref={videoRef} autoPlay playsInline />
             <div className="face-circle"></div>
-
-            <div className="direction-guide">
-              <span>{directionSymbols[currentDirection]}</span>
-              {currentDirection}
-            </div>
           </div>
 
           <div className="camera-buttons">
