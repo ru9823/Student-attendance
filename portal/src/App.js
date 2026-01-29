@@ -10,7 +10,7 @@ function App() {
   const [msg, setMsg] = useState("");
 
   const [form, setForm] = useState({
-    role: "student",   // ✅ Student / Faculty
+    role: "student",
     name: "",
     rollno: "",
     section: "",
@@ -22,7 +22,6 @@ function App() {
     email: "",
   });
 
-  /* ---------- Stop camera on unmount ---------- */
   useEffect(() => {
     return () => {
       if (videoRef.current?.srcObject) {
@@ -31,7 +30,6 @@ function App() {
     };
   }, []);
 
-  /* ---------- Form change ---------- */
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
@@ -44,44 +42,46 @@ function App() {
       body: JSON.stringify({
         image: imgData,
         name: form.name,
-        rollno: form.rollno,
+        rollno: form.rollno || "NA",
         index: index,
-        role: form.role,   // ✅ Student / Faculty
+        role: form.role,
       }),
     });
   };
 
-  /* ---------- AUTO VIDEO CAPTURE ---------- */
-  const autoCaptureFromVideo = async () => {
-    if (!videoRef.current) return;
+  /* ---------- Auto capture from video ---------- */
+/* ---------- Auto capture from video ---------- */
+const autoCaptureFromVideo = async () => {
+  if (!videoRef.current) return;
 
-    const canvas = document.createElement("canvas");
-    const ctx = canvas.getContext("2d");
+  const canvas = document.createElement("canvas");
+  const ctx = canvas.getContext("2d");
 
-    canvas.width = 640;
-    canvas.height = 480;
+  canvas.width = 640;
+  canvas.height = 480;
 
-    let count = 0;
-    const TOTAL_IMAGES = 15; // 5 sec × 3 images
+  let count = 0;
+  const TOTAL_IMAGES = 35; // 5 images/sec × 7 sec
 
-    setMsg("🎥 Auto capturing images...");
+  setMsg("🎥 Auto capturing images...");
 
-    const interval = setInterval(async () => {
-      if (count >= TOTAL_IMAGES) {
-        clearInterval(interval);
-        setMsg("✅ Auto capture completed");
-        return;
-      }
+  const interval = setInterval(async () => {
+    if (count >= TOTAL_IMAGES) {
+      clearInterval(interval);
+      setMsg("✅ Auto capture completed");
+      return;
+    }
 
-      ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
-      const imgData = canvas.toDataURL("image/png");
+    ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
+    const imgData = canvas.toDataURL("image/png");
 
-      await sendToBackend(imgData, count);
-      setImages((prev) => [...prev, imgData]);
+    await sendToBackend(imgData, count);
+    setImages((prev) => [...prev, imgData]);
 
-      count++;
-    }, 333);
-  };
+    count++;
+  }, 200); // 5 images per second
+};
+
 
   /* ---------- Start Camera ---------- */
   const startCamera = async () => {
@@ -102,19 +102,8 @@ function App() {
   const submit = async (e) => {
     e.preventDefault();
 
-    if (!form.name || !form.rollno || !form.department) {
-      setMsg("Please fill required fields");
-      return;
-    }
-
-    if (images.length < 15) {
-      setMsg("Please wait for auto capture to finish");
-      return;
-    }
-
     try {
-      // ✅ Dynamic collection
-      const collectionName = form.role === "faculty" ? "faculty" : "students";
+      const collectionName = form.role === "student" ? "students" : "faculty";
 
       await addDoc(collection(db, collectionName), {
         ...form,
@@ -142,7 +131,6 @@ function App() {
     }
   };
 
-  /* ---------- UI ---------- */
   return (
     <div className="page">
       <div className="card">
@@ -151,21 +139,60 @@ function App() {
         <div className="form-section">
           <h2>Registration Form</h2>
 
-          {/* Role Dropdown */}
+          {/* ROLE DROPDOWN */}
           <select name="role" value={form.role} onChange={handleChange}>
             <option value="student">Student</option>
             <option value="faculty">Faculty</option>
           </select>
 
           <input name="name" placeholder="Name" value={form.name} onChange={handleChange} />
-          <input name="rollno" placeholder="Roll No / Faculty ID" value={form.rollno} onChange={handleChange} />
-          <input name="section" placeholder="Section" value={form.section} onChange={handleChange} />
-          <input name="year" placeholder="Year" value={form.year} onChange={handleChange} />
-          <input name="department" placeholder="Department" value={form.department} onChange={handleChange} />
-          <input name="gender" placeholder="Gender" value={form.gender} onChange={handleChange} />
-          <input name="mobile" placeholder="Mobile" value={form.mobile} onChange={handleChange} />
-          <input type="date" name="dob" value={form.dob} onChange={handleChange} />
-          <input name="email" placeholder="Email" value={form.email} onChange={handleChange} />
+
+          {form.role === "student" && (
+            <input name="rollno" placeholder="Roll No" value={form.rollno} onChange={handleChange} />
+          )}
+
+          {/* Department */}
+          <select name="department" value={form.department} onChange={handleChange}>
+            <option value="">Select Department</option>
+            <option value="CSE">CSE</option>
+            <option value="IT">IT</option>
+            <option value="ENTC">ENTC</option>
+            <option value="EE">EE</option>
+            <option value="CIVIL">CIVIL</option>
+          </select>
+
+          {/* Section */}
+          <select name="section" value={form.section} onChange={handleChange}>
+            <option value="">Select Section</option>
+            <option value="A">A</option>
+            <option value="B">B</option>
+            <option value="C">C</option>
+            <option value="D">D</option>
+          </select>
+
+          {/* Year */}
+          <select name="year" value={form.year} onChange={handleChange}>
+            <option value="">Select Year</option>
+            <option value="1st">I Year</option>
+            <option value="2nd">II Year</option>
+            <option value="3rd">III Year</option>
+            <option value="4th">IV Year</option>
+          </select>
+
+          {form.role === "student" && (
+            <>
+              {/* Gender */}
+              <select name="gender" value={form.gender} onChange={handleChange}>
+                <option value="">Select Gender</option>
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+              </select>
+
+              <input type="date" name="dob" value={form.dob} onChange={handleChange} />
+              <input name="email" placeholder="Email" value={form.email} onChange={handleChange} />
+              <input name="mobile" placeholder="Mobile" value={form.mobile} onChange={handleChange} />
+            </>
+          )}
 
           <button className="submit-btn" onClick={submit}>
             Submit
